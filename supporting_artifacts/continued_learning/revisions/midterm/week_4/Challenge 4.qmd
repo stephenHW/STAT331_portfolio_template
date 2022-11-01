@@ -1,0 +1,61 @@
+---
+title: "Challenge 4"
+format: html
+editor: visual
+---
+
+## Import Libraries
+
+```{r}
+#| warning: false
+#| message: false
+library(tidyverse)
+```
+
+## Read in Data
+
+Avocado contains data includes information on retail information including volume and cost on avocados from multi-outlet sources. Median_Housing_Price contains information on the median housing price for each region that I found from google.
+
+```{r}
+#| warning: false
+#| message: false
+region <- c('LosAngeles', 'SanDiego', 'Sacramento', 'SanFrancisco')
+median_housing_price <- c(1000000, 885000, 475136, 1300000)
+region_median_price <- data.frame(region, median_housing_price)
+
+avocado <- read_csv(here :: here('Week 4','avocado.csv'),col_type=cols())
+```
+
+## 
+
+```{r}
+#| warning: false
+#| message: false
+region <- c('LosAngeles', 'SanDiego', 'Sacramento', 'SanFrancisco')
+df_california <- data.frame(region)
+
+avocado |> 
+  semi_join(df_california) |> 
+  group_by(region) |> 
+  summarise(across(AveragePrice, mean)) |> 
+  left_join(region_median_price) |> 
+  ggplot(mapping = aes(y = AveragePrice, x = median_housing_price)) +
+  geom_point()
+  
+
+```
+
+```{r}
+#| warning: false
+#| message: false
+avocado |> 
+  semi_join(df_california) |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  group_by(region) |> 
+  summarize_at(.cols = 'Number_Avocados', .funs = mean) |> 
+  left_join(region_median_price) |> 
+  ggplot(mapping = aes(y = Number_Avocados, x = median_housing_price)) +
+  geom_point()
+```
+
+For both number of avocados sold and the mean avocado price, there does not seem to be any type of relationship to housing.

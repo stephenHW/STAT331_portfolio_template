@@ -1,0 +1,72 @@
+---
+title: "Challenge 3"
+author: 'Stephen Wessel'
+format: html
+editor: visual
+---
+
+## Import Libraries
+
+```{r}
+#| warning: false
+#| message: false
+library(tidyverse)
+```
+
+## Load Data
+
+```{r}
+hip_hop <- read_csv(here :: here('Week 3','hiphop.csv'),col_type=cols())
+```
+
+## Restructure Data
+
+```{r}
+hip_hop <- hip_hop |> 
+  mutate(ethnic_w = ifelse(ethnic=='white','white','non-white')
+  ) |> 
+  distinct(subj,.keep_all = TRUE) |> 
+  subset(select = c(subj, sex, age, ethnic, intl, vocal, classical, folk,
+                    rock, country, pop, alternative, hiphop, unclassifiable,
+                    ethnic_w)) 
+
+```
+
+## Challenge 2
+
+```{r}
+hip_hop |> 
+  group_by(sex) |> 
+  summarise(mean_intl = mean(intl),
+            mean_vocal = mean(vocal),
+            mean_classical = mean(classical),
+            mean_folk = mean(folk),
+            mean_rock = mean(rock),
+            mean_country = mean(pop),
+            mean_alternative = mean(alternative),
+            mean_hiphop = mean(hiphop),
+            mean_unclassifiable = mean(unclassifiable))
+```
+
+It appears that male subjects reported to like on average 3.059 rock and roll artists where female subjects reported only liking on average 1.932 rock and roll artists.
+
+```{r}
+hip_hop |> 
+  group_by(ethnic_w) |> 
+  summarise(mean_intl = mean(intl),
+            mean_vocal = mean(vocal),
+            mean_classical = mean(classical),
+            mean_folk = mean(folk),
+            mean_rock = mean(rock),
+            mean_country = mean(pop),
+            mean_alternative = mean(alternative),
+            mean_hiphop = mean(hiphop),
+            mean_unclassifiable = mean(unclassifiable))
+```
+
+It again appears that white subjects reported to like on average 2.570 rock and roll artists where non-white subjects reported only liking on average 1.061 rock and roll artists.
+
+## Study Design Technique
+
+1.  First it seems like the individuals conducting the experiment are assuming that black people will automatically know all the AAE vocabulary which I think is assuming too much.
+2.  Secondly, the experimenter was more concerned with finding out information on hip-hop knowledge as the main source of variation for AAE vocabulary knowledge.

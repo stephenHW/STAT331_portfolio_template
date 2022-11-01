@@ -1,0 +1,195 @@
+---
+title: "Lab 3"
+author: 'Stephen Wessel'
+format: html
+editor: visual
+---
+
+## Declare Libraries:
+
+```{r}
+#| warning: false
+#| message: false
+library(tidyverse)
+```
+
+## Loading in Data:
+
+```{r}
+hip_hop <- read_csv(here :: here('Week 3','hiphop.csv'),col_type=cols())
+```
+
+1.  The data set includes information on the knowledge of AAE vocabulary words from 168 participants. Each participant was scored for each word based on their familiarity with a given word.
+
+2.  Each row is one of the 64 words in question for a single participant. Each row also includes information on the demographic, social network, music and pop culture for each participant.
+
+3.  Missing values were replaces with the mean for some columns, but for others it was just filled with NA. This is beneficial because we can easily calculate some summary statistics such as mean, standard deviation and others without having to drop rows from our data frame first. This is not a good idea however if we are trying to predict what the population mean is based on the sample mean. This would influence the data by stating we have more observations than for that column than we actually have which is crucial when we predict the population statistics using the predicted statistics.
+
+4.  Notice that all the different means are decimals where when we look at the data, the inputs have to be whole numbers. Therefore lets try to see if we can get only values with a decimal value.
+
+    ```{r}
+    hip_hop <- hip_hop |> 
+      mutate(
+        sex = as.factor(sex),
+        ethnic = as.factor(ethnic))
+    ```
+
+    ```{r}
+    hip_hop |> 
+      mutate(
+        asianMove = as.character(x = asianMove),
+        blackMove = as.character(x = blackMove),
+        hispanicMove = as.character(x = hispanicMove),
+        nativeMove = as.character(x = nativeMove),
+        SAAMEMove = as.character(x = SAAMEMove),
+        whiteMove = as.character(x = whiteMove),
+        blackWeekly = as.character(x = blackWeekly),
+        subj = as.factor(x = subj)) |> 
+      filter(
+        asianMove != as.integer(asianMove) |
+        blackMove != as.integer(blackMove) |
+        hispanicMove != as.integer(hispanicMove) |
+        nativeMove != as.integer(nativeMove) |
+        SAAMEMove != as.integer(SAAMEMove) |
+        whiteMove != as.integer(whiteMove) |
+        blackWeekly != as.integer(blackWeekly)
+             ) |> 
+      group_by(subj) |>
+      summarise(no_rows = length(subj))
+    ```
+
+Notice that there is missing data for 13 subjects. Each subject is missing the data for each word (64 times), so we do not need to use data from one row to fill in another row. I will implement more cleaning to remove those subjects from the data when we are doing analysis on columns that contain missing information.
+
+5.  
+
+```{r}
+hip_hop |> 
+  distinct(x = word) |> 
+  count()
+```
+
+There are 64 AAE words that were studied.
+
+6\.
+
+```{r results='hide'}
+hip_hop <- hip_hop |> 
+  mutate(ethnic_w = ifelse(ethnic=='white','white','non-white')
+  )
+```
+
+7\.
+
+```{r}
+hip_hop |> 
+  distinct(x = subj, .keep_all = TRUE) |> 
+  ggplot(mapping = aes(x = sex)) +
+  labs(y = 'Frequency') +
+  geom_bar()+
+  ggtitle('Sex Distribution')
+
+
+hip_hop |> 
+  distinct(x = subj, .keep_all = TRUE) |> 
+  ggplot(mapping = aes(x = age)) +
+  labs(y = 'Frequency') +
+  geom_histogram() +
+  ggtitle('Age Distribution')
+
+
+hip_hop |> 
+  distinct(x = subj, .keep_all = TRUE) |> 
+  ggplot(mapping = aes(x = ethnic)) +
+  labs(y = 'Frequency') +
+  geom_bar() +
+  ggtitle('Ethnicity Distribution')
+
+```
+
+It appears than most of the subjects are female, white, and younger than 20 years old. Each of these variables were analyzed separately, and are unaware of cross variable relationship. We need to futher investigate by grouping up our subjects on these three fields to know how each of these variables interact with one another.
+
+8\.
+
+```{r}
+hip_hop |> 
+  distinct(x = subj, .keep_all = TRUE) |> 
+  group_by(sex) |> 
+  ggplot(mapping = aes(x = age, color = sex)) +
+  geom_histogram() + 
+  labs(y = 'Number of subjects',
+       x = 'Age')+
+  facet_wrap(~sex) + 
+  ggtitle('Age Distribution Seperated by Sex')
+
+hip_hop |> 
+  distinct(x = subj, .keep_all = TRUE) |> 
+  group_by(sex) |> 
+  ggplot(mapping = aes(x = ethnic, color = sex)) +
+  geom_bar() + 
+  labs(y = 'Number of subjects',
+       x = 'Ethnicity')+
+  facet_wrap(~sex)+
+  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
+  ggtitle('Ethnicity Frequency Seperated by Sex')
+```
+
+From our two cross variable plots, we can notice that both are a majority white. We also see that there is a similar age distribution between the two sexes as well. This shows promise that sex will have a low impact on further analysis.
+
+## Familiar Words
+
+a\. People below the age of 20
+
+```{r}
+hip_hop |> 
+  filter(age < 20) |> 
+  group_by(word) |> 
+  summarise(mean_familiarity = mean(familiarity)) |> 
+  filter(
+    mean_familiarity == max(mean_familiarity)| 
+    mean_familiarity == min(mean_familiarity)
+           )
+  
+```
+
+b\. Non-White Women
+
+```{r}
+hip_hop |> 
+  filter(sex == 'Female'& ethnic_w == 'non-white') |> 
+  group_by(word) |> 
+  summarise(mean_familiarity = mean(familiarity)) |> 
+  filter(
+    mean_familiarity == max(mean_familiarity)| 
+    mean_familiarity == min(mean_familiarity)
+           )
+
+```
+
+c\. White men above age of 30
+
+```{r}
+hip_hop |> 
+  filter(sex == 'Male'& ethnic_w == 'white' & age > 30) |> 
+  group_by(word) |> 
+  summarise(mean_familiarity = mean(familiarity)) |> 
+  filter(
+    mean_familiarity == max(mean_familiarity)| 
+    mean_familiarity == min(mean_familiarity)
+           )
+```
+
+## Study Subjects
+
+```{r}
+hip_hop |> 
+    distinct(subj,.keep_all = TRUE) |> 
+    filter(sex == 'Male' 
+     & ethnic == 'white' 
+     & age > 16 
+     & age < 24
+     & city <= 60000
+     & city >= 10000) |> 
+     filter(bieber == max(bieber))
+```
+
+Participant 17 is the only participant who fit all the categories and knows the most Justin Bieber songs. What is interesting is that it is not the maximum number of known songs possible. When I look into which subjects knew the most Justin Bieber songs, their gender was identified as Female.

@@ -1,0 +1,98 @@
+---
+title: "Practice Activity 4"
+author: 'Stephen Wessel'
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Import Libraries:
+
+```{r}
+library(readxl) 
+library(tidyverse)
+```
+
+## Data Import:
+
+1\.
+
+```{r}
+military <- read_xlsx(here::here('Week 4',
+                                 "gov_spending_per_capita.xlsx"), 
+                      sheet = 'Share of Govt. spending', 
+                      skip = 7, 
+                      n_max = 190)
+```
+
+2\.
+
+```{r}
+military_clean <- military |> 
+  mutate(across(.cols = everything(), ~na_if(x = ., y = '. .')),
+         across(.cols = everything(), ~na_if(x = ., y = 'xxx'))) 
+```
+
+3\.
+
+```{r}
+military_clean <- military_clean |> 
+  mutate(across(.cols = `1988`:`2019`, .fns = as.numeric))
+```
+
+```{r}
+cont_region <- read_xlsx(here::here('Week 4',
+                                    "gov_spending_per_capita.xlsx"), 
+                      sheet = "Regional totals", 
+                      skip = 14) |> 
+  filter(Region != "World total (including Iraq)", 
+         Region != "World total (excluding Iraq)")
+```
+
+4\.
+
+```{r}
+military_clean <- military_clean |> 
+  anti_join(cont_region, by = c('Country' = 'Region')) |> 
+  filter(!grepl('Middle East', Country)) |> 
+  filter(!grepl('Sub-Saharan', Country)) |> 
+  filter(!grepl('Asia & Oceania', Country)) |> 
+  filter(!grepl('Central America and the Caribbean',Country))
+          
+  
+```
+
+## Data Organization
+
+4\.
+
+```{r}
+military_clean_longer <- military_clean |> 
+  pivot_longer(cols = `1988`:`2019`, names_to = 'Year', values_to = 'Spending')
+```
+
+```{r}
+military_clean_longer |> 
+  ggplot(
+       mapping = aes(x = Spending, y = Year)) +
+  geom_boxplot()
+
+```
+
+```{r}
+df <- data.frame ('Year'  = c('1990'))
+
+military_clean |> 
+  anti_join(cont_region, by = c('Country' = 'Region')) |> 
+  filter(!grepl('Middle East', Country)) |> 
+  filter(!grepl('Sub-Saharan', Country)) |> 
+  filter(!grepl('Asia & Oceania', Country)) |> 
+  filter(!grepl('Central America and the Caribbean',Country)) |> 
+  pivot_longer(cols = `1988`:`2019`, names_to = 'Year', values_to = 'Spending') |> 
+    right_join(df, by = 'Year') |> 
+  slice_max(Spending)
+
+```

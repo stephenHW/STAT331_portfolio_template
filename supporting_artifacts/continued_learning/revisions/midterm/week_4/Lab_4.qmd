@@ -1,0 +1,155 @@
+---
+title: "Lab 4"
+format: html
+editor: visual
+---
+
+## Import Libraries
+
+```{r}
+#| warning: false
+#| message: false
+library(tidyverse)
+```
+
+## Read in Data
+
+This data includes information on retail information including volume and cost on avocados from multi-outlet sources.
+
+```{r}
+avocado <- read_csv(here :: here('Week 4','avocado.csv'),col_type=cols())
+```
+
+## Data Cleaning
+
+Region has four different naming conventions. These include Total United States, State, City, and Region
+
+```{r}
+region <- c('GreatLakes', 'Midsouth', 'Northeast',
+             'Plains', 'SouthCentral', 'Southeast',
+             'West')
+df_major_regions <- data.frame(region)
+
+region <- c('California', 'SouthCarolina')
+df_major_states <- data.frame(region)
+
+region <- c('TotalUS')
+df_total_us <- data.frame(region)
+
+
+region_avocado <- avocado |> 
+  semi_join(df_major_regions)
+
+city_avocado <- avocado |> 
+  anti_join(df_major_regions) |> 
+  anti_join(df_major_states) |> 
+  anti_join(df_total_us)
+```
+
+## Exercises
+
+3.  
+
+```{r}
+type <- c('organic')
+
+df_organic_small = data.frame(type)
+
+region_avocado |> 
+  semi_join(df_organic_small) |> 
+  group_by(region) |> 
+  summarize_at(.cols = '4225', .funs = sum)
+```
+
+It appears that the west region sold the most organic small hess avocados.
+
+4\.
+
+```{r}
+avocado |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  separate(col=Date, into=c('year', 'month', 'day'), sep='-') |> 
+  group_by(month) |> 
+  summarize_at(.vars = 'Number_Avocados', .funs = sum)
+  
+```
+
+```{r}
+avocado |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  separate(col=Date, into=c('year', 'month', 'day'), sep='-') |> 
+  group_by(month) |> 
+  summarize(across(c('Number_Avocados'), sum))
+```
+
+February seems to have the most avocados sold than any other month.
+
+5\.
+
+```{r}
+top_cities <- city_avocado |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  group_by(region) |> 
+  summarize_at(.cols = 'Number_Avocados', .funs = sum) |> 
+  arrange(desc(Number_Avocados)) |> 
+  head(n = 5)
+
+avocado |> 
+  semi_join(top_cities) |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  ggplot(mapping = aes(y = Number_Avocados, x = region)) +
+  geom_boxplot()
+```
+
+6\.
+
+```{r}
+region <- c('LosAngeles', 'SanDiego', 'Sacramento', 'SanFrancisco')
+df_california <- data.frame(region)
+
+avocado_california <- avocado |> 
+  semi_join(df_california) 
+avocado_california_difference <- avocado_california |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados')  |> 
+  group_by(region, type) |> 
+  summarise_at(.cols = 'AveragePrice', .funs = mean) |> 
+  pivot_wider(names_from = type, values_from = AveragePrice) |> 
+  mutate(difference = organic - conventional)
+avocado_california_difference
+```
+
+```{r}
+avocado_california_difference |> 
+  ggplot(mapping = aes(x = region, y = difference)) +
+  geom_bar(stat = "identity")+
+  ylab('Difference between Organic and Conventional') +
+  xlab('City')
+```
+
+It seems like the city with the biggest difference between conventional and organic mean price in avocados for the cities, San Diego, Los Angeles, Sacramento and San Francisco is San Francisco.
+
+7\.
+
+```{r}
+avocado_sales_per_PLU_type_region <- avocado_california  |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  group_by(type, PLU, region) |> 
+  summarise_at(.cols = 'Number_Avocados', .funs = sum) 
+
+avocado_sales_per_region <- avocado_california  |> 
+  pivot_longer(cols = `4046`:`4770`, names_to = 'PLU', values_to = 'Number_Avocados') |> 
+  group_by(type, region) |> 
+  summarise_at(.cols = 'Number_Avocados', .funs = sum) |> 
+  rename('Total_Avocados' = 'Number_Avocados')
+
+avocado_sales_per_PLU_type_region |> 
+  left_join(avocado_sales_per_region) |> 
+  mutate(PLU = recode(PLU, `4046` = 'Small', `4225` = 'Large', `4770` =  'Extra Large' )) |> 
+  mutate(mean_percentage = Number_Avocados / Total_Avocados) |> 
+  ggplot(aes(x = region, y=mean_percentage, fill=PLU)) + 
+  facet_wrap(~type) +
+  geom_col(stat="identity") +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  xlab('Region of CA') +
+  ylab('Proportion of Mean Avocados Sold')
+```
