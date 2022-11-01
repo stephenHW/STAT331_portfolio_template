@@ -1,0 +1,44 @@
+---
+title: "Challenge 2"
+author: "Stephen Wessel"
+format: html
+editor: visual
+theme: darkly
+code-fold: TRUE
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Loading Data:
+
+```{r}
+#| warning: FALSE
+library(package = 'tidyverse')
+df_surveys <- read_csv(here::here('Week 2','Lab 2','surveys.csv'))
+```
+
+## Challenge 2:
+
+```{r}
+cdPalette_grey <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                    "#0072B2", "#D55E00", "#CC79A7")
+
+ggplot(data = df_surveys, 
+       mapping = aes(y = species, x = weight, color = genus)) +
+  geom_boxplot() +
+  scale_color_manual(values = cdPalette_grey) + 
+  xlim(0, 360) +
+  annotate("text", y = 1, x = 320, label = "Neotoma") +
+  annotate("text", y = c(2,12), x = 320, label = "Chaetodipus") +
+  annotate("text", y = c(3, 8), x = 320, label = "Peromyscus") +
+  annotate("text", y = 4, x = 320, label = "Perognathus") +
+  annotate("text", y = c(5, 9), x = 320, label = "Reithrodontomys") +
+  annotate("text", y = 6, x = 320, label = "Sigmodon") +
+  annotate("text", y = c(7,14), x = 320, label = "Onychomys") +
+  annotate("text", y = c(10,11,13), x = 320, label = "Dipodomys") +
+  labs(x = 'Weight of Animal(g)',
+       y = 'Speies of Animal') +
+  theme(legend.position="none")
+```
