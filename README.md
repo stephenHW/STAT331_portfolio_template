@@ -6,15 +6,15 @@ See instructions for creating your final portfolio [here](https://docs.google.co
 
 ## Final Grade Reflection
 
-### Demonstration of Learning Targets
+#### Demonstration of Learning Targets
 
-### Demonstration of Continued Learning
+#### Demonstration of Continued Learning
 
 #### Revising My Thinking
 
 #### Extending My Thinking
 
-### Growth as a Team Member
+#### Growth as a Team Member
 
 ## Essay Responses
 
